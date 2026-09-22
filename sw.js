@@ -1,5 +1,6 @@
-const CACHE='44433-pwa-v7';
+const CACHE='44433-pwa-v9';
 const FILES=['./','./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
+function applyOfficialFixes(response){return response.text().then(text=>{text=text.replaceAll('Versão Beta 8.2','Versão Oficial 1.0');text=text.replaceAll('#villainIndicator{display:none;','#villainIndicator{display:none!important;');text=text.replaceAll('padding:15px 22px;border-radius:22px;font-weight:900;font-size:clamp(16px,3vw,28px);border:4px solid #ffd42a','padding:7px 11px;border-radius:11px;font-weight:900;font-size:clamp(8px,1.5vw,14px);border:2px solid #ffd42a');text=text.replaceAll('if(lives<=0)end(false);else respawnAtCheckpoint()','if(lives<=0){lives=5;$(\'#lives\').textContent=lives;respawnAtCheckpoint()}');return new Response(text,{headers:{'Content-Type':'text/html;charset=UTF-8'}})})}
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
-self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(x=>{let copy=x.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return x}).catch(()=>caches.match('./index.html')))));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>{let p=r||fetch(e.request).then(x=>{let copy=x.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return x}).catch(()=>caches.match('./index.html'));return e.request.url.endsWith('/index.html')||e.request.url.endsWith('/44433-pwa/')?applyOfficialFixes(p):p})));
